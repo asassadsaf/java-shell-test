@@ -115,9 +115,12 @@ public class ExecShell {
         log.info("start exec command: {}", Arrays.toString(command));
         int exitVal = 1;
         try {
+            //exec方法本质还是new ProcessBuilder().start()
 //            Process proc = Runtime.getRuntime().exec(command);
-//            Process proc = new ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.INHERIT).redirectErrorStream(true).start();
-            Process proc = new ProcessBuilder(command).redirectOutput(new File("/home/fkp/logs/Kms/Kms.log")).redirectErrorStream(true).start();
+            //使用processBuilder好处是可以重定向子进程的输入输出，将子进程IO和父进程IO独立，防止父进程挂掉导致子进程崩溃
+            //以下设置子进程标准输出重定向到ProcessBuilder.Redirect.INHERIT或指定文件，并将错误输出合并到标准输出
+            Process proc = new ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.PIPE).redirectErrorStream(true).start();
+//            Process proc = new ProcessBuilder(command).redirectOutput(new File("/home/fkp/logs/Kms/Kms.log")).redirectErrorStream(true).start();
             printAllResult(proc);
             boolean flag = proc.waitFor(timeout, unit);
             if(flag){
@@ -125,6 +128,8 @@ public class ExecShell {
             }else {
                 log.error("exec command timeout,value: {},timeUnit: {}", timeout, unit.toString());
             }
+            log.info("destroy process.");
+            proc.destroy();
         } catch (Exception e) {
             log.error("exec command error,msg: {}", e.getMessage(), e);
         }
