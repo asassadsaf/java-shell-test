@@ -25,4 +25,9 @@ public class UserController {
     public int execCommand(String command){
         return ExecShell.execLocalWithTimeout(command, 10, TimeUnit.SECONDS);
     }
+
+    @GetMapping(value = "/killProcess")
+    public boolean killProcess(int port, String name){
+        return ExecShell.killProcess(port, name);
+    }
 }
