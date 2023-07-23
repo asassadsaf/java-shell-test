@@ -50,6 +50,7 @@ public class ExecShell {
      * @return 成功为true，失败为false
      */
     public synchronized static boolean killProcess(int port) {
+        log.info("exec killProcess,port: {}", port);
         Process process = null;
         try {
             //netstat -ntlp | grep 8080 | grep LISTEN | awk '{print $7}'
@@ -117,7 +118,6 @@ public class ExecShell {
      * @return 子流程返回值
      */
     public static int execLocal(String cmd, String filePath) {
-        log.info("start exec command: {}", cmd);
         int exitVal = -1;
         Process process = null;
         try {
@@ -145,7 +145,6 @@ public class ExecShell {
      * @return 子流程返回值，若超时返回-1
      */
     public static int execLocalWithTimeout(String cmd, long timeout, TimeUnit unit, String filePath){
-        log.info("start exec command: {}", cmd);
         int exitVal = -1;
         Process process = null;
         try {
@@ -177,6 +176,7 @@ public class ExecShell {
      */
     public static Process getProcess(String command) throws IOException {
         String[] cmd = {"/bin/sh", "-c", command};
+        log.info("start exec command: {}", StringUtils.join(cmd));
         return new ProcessBuilder(cmd).redirectErrorStream(true).start();
     }
 
@@ -189,6 +189,7 @@ public class ExecShell {
      */
     public static Process getProcessOutput2File(String command, String filePath) throws IOException {
         String[] cmd = {"/bin/sh", "-c", command};
+        log.info("start exec command: {}", StringUtils.join(cmd));
         return new ProcessBuilder(cmd).redirectOutput(new File(filePath)).redirectErrorStream(true).start();
     }
 
