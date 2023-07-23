@@ -27,7 +27,12 @@ public class UserController {
     }
 
     @GetMapping(value = "/killProcess")
-    public boolean killProcess(int port, String name){
-        return ExecShell.killProcess(port, name);
+    public boolean killProcess(int port){
+        return ExecShell.killProcess(port);
+    }
+
+    @GetMapping(value = "/isRunning")
+    public boolean isRunning(int port){
+        return ExecShell.isRunning(port);
     }
 }

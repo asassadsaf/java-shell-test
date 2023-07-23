@@ -20,10 +20,22 @@ public class ExecShell {
     public static final long DEFAULT_TIMEOUT = 10;
     public static final TimeUnit DEFAULT_TIMEUNIT = TimeUnit.SECONDS;
 
+    /**
+     * 执行命令，阻塞等待执行结果
+     * @param cmd 命令
+     * @return 返回值
+     */
     public static int execLocal(String cmd) {
         return execLocal(cmd, null);
     }
 
+    /**
+     * 执行命令，在超时时间内等待结果
+     * @param cmd 命令
+     * @param timeout 超时时间值
+     * @param unit 超时时间单位
+     * @return 返回值，若超时返回-1
+     */
     public static int execLocalWithTimeout(String cmd, long timeout, TimeUnit unit){
         return execLocalWithTimeout(cmd, timeout, unit, null);
     }
@@ -32,13 +44,20 @@ public class ExecShell {
         return execLocalWithTimeout(cmd, DEFAULT_TIMEOUT, DEFAULT_TIMEUNIT);
     }
 
-    public synchronized static boolean killProcess(int port, String name) {
+    /**
+     * 杀掉指定port的进程，kill -9
+     * @param port 进程的端口号
+     * @return 成功为true，失败为false
+     */
+    public synchronized static boolean killProcess(int port) {
         Process process = null;
         try {
-            process = getProcess("ps -ef|grep " + name + "|grep -w " + port + "|grep -v grep|awk '{print $2}'");
-            String pid = getOutput(process);
-            log.info("process id: {}", pid);
-            if(StringUtils.isNotBlank(pid)){
+            //netstat -ntlp | grep 8080 | grep LISTEN | awk '{print $7}'
+            process = getProcess("netstat -ntlp | grep " + port + " | grep LISTEN | awk '{print $7}'");
+            String info = getOutput(process);
+            log.info("process info: {}", info);
+            if(StringUtils.isNotBlank(info)){
+                String pid = info.split("/")[0];
                 return execLocalWithTimeout("kill -9 " + pid) == 0;
             }
         }catch (Exception e){
@@ -51,13 +70,23 @@ public class ExecShell {
     }
 
 
+    /**
+     * 判断某个端口是否被监听
+     * @param port 被查询的端口号
+     * @return 正在被监听为true，否则为false
+     */
     public static boolean isRunning(int port) {
         //netstat -tl | grep 20133 | grep LISTEN | awk '{print $6}'
         //lsof -i:xxx -sTCP:LISTEN | awk '{print $10}'
-        return resultHasStr("netstat -tl | grep " + port + " | grep LISTEN | awk '{print $6}'", "LISTEN");
+        return resultHasStr("netstat -ntl | grep " + port + " | grep LISTEN | awk '{print $6}'", "LISTEN");
     }
 
-
+    /**
+     * 执行命令，判断子流程的输出是否包含指定字符串
+     * @param cmd 命令
+     * @param str 匹配字符串
+     * @return 匹配为true，不匹配为false
+     */
     public static boolean resultHasStr(String cmd, String str) {
         log.info("exec command: {},hasStr: {}", cmd, str);
         if(StringUtils.isBlank(str)){
@@ -81,6 +110,12 @@ public class ExecShell {
         return false;
     }
 
+    /**
+     * 执行脚本，阻塞等待，将子流程的输出重定向到指定文件
+     * @param cmd 命令
+     * @param filePath 文件路径
+     * @return 子流程返回值
+     */
     public static int execLocal(String cmd, String filePath) {
         log.info("start exec command: {}", cmd);
         int exitVal = -1;
@@ -101,6 +136,14 @@ public class ExecShell {
         return exitVal;
     }
 
+    /**
+     * 执行命令，在超时时间内阻塞等待，将子流程输出重定向到指定文件
+     * @param cmd 命令
+     * @param timeout 超时时间值
+     * @param unit 超时时间单位
+     * @param filePath 文件路径
+     * @return 子流程返回值，若超时返回-1
+     */
     public static int execLocalWithTimeout(String cmd, long timeout, TimeUnit unit, String filePath){
         log.info("start exec command: {}", cmd);
         int exitVal = -1;
@@ -126,11 +169,24 @@ public class ExecShell {
         return exitVal;
     }
 
+    /**
+     * 执行命令，返回Process对象
+     * @param command 命令
+     * @return Process对象
+     * @throws IOException 捕获异常
+     */
     public static Process getProcess(String command) throws IOException {
         String[] cmd = {"/bin/sh", "-c", command};
         return new ProcessBuilder(cmd).redirectErrorStream(true).start();
     }
 
+    /**
+     * 执行命令，将子流程输出重定向到指定文件，返回Process对象
+     * @param command 命令
+     * @param filePath 文件路径
+     * @return Process对象
+     * @throws IOException 捕获异常
+     */
     public static Process getProcessOutput2File(String command, String filePath) throws IOException {
         String[] cmd = {"/bin/sh", "-c", command};
         return new ProcessBuilder(cmd).redirectOutput(new File(filePath)).redirectErrorStream(true).start();
